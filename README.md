@@ -143,3 +143,5 @@ git push -u origin main
 git checkout master → se placer sur la branche qui doit recevoir le contenu
 git merge dev → copie tout l'historique et le contenu de dev dans master
 git push → envoie ça sur GitHub
+#
+page.tsx était un  composant serveur et n'aurais pas supporter un useState donc j'ai créer TacheItems.tsx

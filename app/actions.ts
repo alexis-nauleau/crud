@@ -24,6 +24,20 @@ export async function createTache(formData: FormData) {
 data: { titre }, // raccourci JS pour { titre: titre }
   })
 
-  // Dit à Next.js de rafraîchir la page d'accueil ('/')
+  // rafraîchir la page d'accueil ('/')
+  revalidatePath('/')
+}
+
+// ----- MARQUER FAIT / PAS FAIT -----
+
+// Reçoit deux paramètres 
+// l'id de la tâche à modifier, et son état actuel (fait ou pas fait)
+export async function toggleTache(id: string, fait: boolean) {
+
+  // Modifie la ligne dont l'id correspond exactement (where: { id })
+  await prisma.taches.update({
+    where: { id },
+    data: { fait: !fait }, // "!" = inverse la valeur (true devient false, et inversement)
+  })
   revalidatePath('/')
 }

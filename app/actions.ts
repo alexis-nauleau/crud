@@ -41,3 +41,19 @@ export async function toggleTache(id: string, fait: boolean) {
   })
   revalidatePath('/')
 }
+
+// ----- SUPPRIMER UNE TÂCHE -----
+
+// Reçoit uniquement l'id de la tâche à supprimer
+export async function deleteTache(id: string) {
+
+  // Supprime définitivement la ligne correspondant à cet id
+  await prisma.taches.delete({
+    where: { id },
+  })
+
+  // Rafraîchit la page pour que la tâche disparaisse visuellement
+  revalidatePath('/')
+}
+
+

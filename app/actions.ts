@@ -55,5 +55,11 @@ export async function deleteTache(id: string) {
   // Rafraîchit la page pour que la tâche disparaisse visuellement
   revalidatePath('/')
 }
-
-
+ // MODIFIER UNE TACHE
+export async function updateTache(id: string, titre: string) {
+  await prisma.taches.update({
+    where: { id },
+    data: { titre },
+  })
+  revalidatePath('/')
+}

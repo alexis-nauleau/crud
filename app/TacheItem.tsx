@@ -1,9 +1,9 @@
 'use client'
 
 import { useState } from 'react'
+import { Pencil, Trash2, Check } from 'lucide-react'
 import { toggleTache, deleteTache, updateTache } from './actions'
 
-// Type décrivant une tâche, pour que TypeScript sache à quoi s'attendre
 type Tache = {
   id: string
   titre: string
@@ -11,59 +11,76 @@ type Tache = {
 }
 
 export default function TacheItem({ tache }: { tache: Tache }) {
-  // "enEdition" = un booléen qui dit si on affiche le champ modifiable ou le texte normal
   const [enEdition, setEnEdition] = useState(false)
-  // "titre" = une copie locale du texte, modifiable pendant l'édition
   const [titre, setTitre] = useState(tache.titre)
 
-  // Appelée quand l'utilisateur valide sa modification
   async function handleUpdate() {
     await updateTache(tache.id, titre)
-    setEnEdition(false) // referme le mode édition une fois sauvegardé
+    setEnEdition(false)
   }
 
   return (
-    <li className="flex items-center gap-3 border rounded px-3 py-2">
-      
+    <div className="group flex items-center gap-3 px-2.5 py-3 rounded-xl hover:bg-zinc-800 transition-colors">
+
+      <form action={toggleTache.bind(null, tache.id, tache.fait)}>
+        <button
+          type="submit"
+          className={
+            tache.fait
+              ? 'w-5 h-5 rounded-full bg-teal-500 flex items-center justify-center'
+              : 'w-5 h-5 rounded-full border-[1.5px] border-zinc-600'
+          }
+        >
+          {tache.fait && <Check size={13} className="text-teal-950" />}
+        </button>
+      </form>
+
       {enEdition ? (
-        // ----- MODE ÉDITION -----
         <input
           type="text"
           value={titre}
           onChange={(e) => setTitre(e.target.value)}
-          className="border rounded px-2 py-1 flex-1"
+          className="flex-1 bg-transparent text-sm text-zinc-50 border-b border-zinc-600 focus:outline-none"
         />
       ) : (
-        // ----- MODE AFFICHAGE NORMAL -----
-        <span className={tache.fait ? 'line-through text-gray-400 flex-1' : 'flex-1'}>
+        <span
+          className={
+            tache.fait
+              ? 'flex-1 text-sm line-through text-zinc-500'
+              : 'flex-1 text-sm text-zinc-50'
+          }
+        >
           {tache.titre}
         </span>
       )}
 
-      <form action={toggleTache.bind(null, tache.id, tache.fait)}>
-        <button type="submit" className="text-sm border px-2 py-1 rounded">
-          {tache.fait ? 'Fait' : 'À faire'}
-        </button>
-      </form>
-
       {enEdition ? (
-        // Bouton pour valider la modification
-        <button onClick={handleUpdate} className="text-green-600 text-sm">
+        <button
+          onClick={handleUpdate}
+          className="text-xs text-teal-400 hover:text-teal-300"
+        >
           Valider
         </button>
       ) : (
-        // Bouton pour activer le mode édition
-        <button onClick={() => setEnEdition(true)} className="text-blue-600 text-sm">
-          Modifier
+        <button
+          onClick={() => setEnEdition(true)}
+          aria-label="Modifier"
+          className="opacity-0 group-hover:opacity-100 transition-opacity"
+        >
+          <Pencil size={16} className="text-teal-400 hover:text-teal-300" />
         </button>
       )}
 
       <form action={deleteTache.bind(null, tache.id)}>
-        <button type="submit" className="text-red-600 text-sm">
-          Supprimer
+        <button
+          type="submit"
+          aria-label="Supprimer"
+          className="opacity-0 group-hover:opacity-100 transition-opacity"
+        >
+          <Trash2 size={16} className="text-rose-400 hover:text-rose-300" />
         </button>
       </form>
 
-    </li>
+    </div>
   )
 }

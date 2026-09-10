@@ -139,3 +139,7 @@ git commit -m "Initial commit"
 git remote add origin https://github.com/ton-pseudo/nom-du-repo.git
 git branch -M main
 git push -u origin main
+# Merge sur master
+git checkout master → se placer sur la branche qui doit recevoir le contenu
+git merge dev → copie tout l'historique et le contenu de dev dans master
+git push → envoie ça sur GitHub

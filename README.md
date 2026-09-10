@@ -145,3 +145,5 @@ git merge dev → copie tout l'historique et le contenu de dev dans master
 git push → envoie ça sur GitHub
 #
 page.tsx était un  composant serveur et n'aurais pas supporter un useState donc j'ai créer TacheItems.tsx
+# Installation de lucide react
+npm i lucide-react

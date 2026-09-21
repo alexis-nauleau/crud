@@ -147,3 +147,8 @@ git push → envoie ça sur GitHub
 page.tsx était un  composant serveur et n'aurais pas supporter un useState donc j'ai créer TacheItems.tsx
 # Installation de lucide react
 npm i lucide-react
+# Migration Prisma
+npx prisma migrate dev --name categories              ajout d'une colonne catégorie
+npx prisma generate                 régénérer prisma
+npx tsx prisma/seed.ts    lancer le script
+npx prisma migrate dev --name ajoute_categories

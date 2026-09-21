@@ -7,9 +7,18 @@ datasource db {
   provider = "postgresql"
 }
 
+model Categorie {
+  id     String  @id @default(cuid())
+  nom    String
+  couleur String  
+  taches Taches[] // une catégorie peut avoir plusieurs tâches
+}
+
 model Taches {
-  id           String   @id @default(cuid())
+  id           String     @id @default(cuid())
   titre        String
-  fait        Boolean  @default(false)
-  dateCreation DateTime @default(now())
+  fait         Boolean    @default(false)
+  dateCreation DateTime   @default(now())
+  categorieId  String?    // "?" = optionnel, une tâche peut n'avoir aucune catégorie
+  categorie    Categorie? @relation(fields: [categorieId], references: [id])
 }

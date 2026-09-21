@@ -1,26 +1,19 @@
-// Directive Next.js : ce composant s'exécute AUSSI dans le navigateur (pas que sur le
-// serveur), car il a besoin de useState pour gérer l'interactivité en temps réel
-// (basculer entre affichage normal et mode édition)
 'use client'
 
-// Hook React qui permet de "retenir" une valeur entre les rendus du composant
+
 import { useState } from 'react'
-
-// Icônes utilisées pour les boutons (crayon, poubelle, coche)
 import { Pencil, Trash2, Check } from 'lucide-react'
-
-// Les Server Actions qu'on appelle depuis ce composant client
 import { toggleTache, deleteTache, updateTache } from './actions'
 
-// Décrit la forme attendue d'une tâche, pour que TypeScript vérifie qu'on utilise
-// bien les bonnes propriétés (id, titre, fait) sans faute de frappe
+
 type Tache = {
   id: string
   titre: string
   fait: boolean
+  categorie: { nom: string; couleur: string } | null
 }
 
-// Le composant reçoit une seule tâche en "prop" (donnée transmise par le parent, ici TacheList)
+
 export default function TacheItem({ tache }: { tache: Tache }) {
 
   // "enEdition" = est-ce qu'on affiche le champ modifiable ou le texte normal ?
@@ -40,18 +33,17 @@ export default function TacheItem({ tache }: { tache: Tache }) {
   return (
     // "group" permet à ce conteneur de servir de référence pour "group-hover" plus bas
     // (les icônes n'apparaissent que quand on survole CETTE ligne précise)
-    <div className="group flex items-center gap-3 px-2.5 py-3 rounded-xl hover:bg-zinc-800 transition-colors">
+    // "shadow-lg shadow-black/40" ajoute une ombre portée visible même sur fond sombre
+    <div className="group flex items-center gap-3 px-2.5 py-3 rounded-xl hover:bg-zinc-800 transition-colors shadow-lg shadow-black/40">
 
-      {/* Bouton rond pour marquer fait/pas fait.
-          Toujours dans un <form> avec .bind() pour pré-attacher l'id et l'état actuel
-          à toggleTache avant qu'elle soit appelée au clic */}
+      {/* Bouton rond pour marquer fait pas fait.*/}
       <form action={toggleTache.bind(null, tache.id, tache.fait)}>
         <button
           type="submit"
           className={
             tache.fait
               ? 'w-5 h-5 rounded-full bg-teal-500 flex items-center justify-center'
-              : 'w-5 h-5 rounded-full border-[1.5px] border-zinc-600'
+              : 'w-5 h-5 rounded-full border-[1.5px] border-zinc-600 '
           }
         >
           {/* La coche ne s'affiche que si la tâche est faite */}
@@ -64,7 +56,7 @@ export default function TacheItem({ tache }: { tache: Tache }) {
       {enEdition ? (
         <input
           type="text"
-          value={titre} // valeur contrôlée par le state React, pas par le DOM directement
+          value={titre} 
           onChange={(e) => setTitre(e.target.value)} // met à jour le state à chaque frappe
           className="flex-1 bg-transparent text-sm text-zinc-50 border-b border-zinc-600 focus:outline-none"
         />
@@ -78,6 +70,16 @@ export default function TacheItem({ tache }: { tache: Tache }) {
         >
           {tache.titre}
         </span>
+      )}
+      {/* Nouveau : rond coloré de la catégorie */}
+      {tache.categorie && (
+        <span
+          // "style" avec une couleur dynamique : impossible avec une classe Tailwind
+          
+          style={{ backgroundColor: tache.categorie.couleur }}
+          className="w-5 h-5 rounded-full shrink-0"
+          title={tache.categorie.nom} // affiche le nom au survol de la souris
+        />
       )}
 
       {/* Bouton Modifier/Valider, selon le mode actuel */}

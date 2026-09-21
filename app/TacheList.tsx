@@ -7,6 +7,7 @@ type Tache = {
   id: string
   titre: string
   fait: boolean
+  categorie: { nom: string; couleur: string } | null
 }
 
 // Les 3 filtres possibles

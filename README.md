@@ -1,18 +1,9 @@
-# ===== VÉRIFICATION DES OUTILS =====
-
-# Vérifie la version de Node.js installée
-node -v
-
-# Vérifie que Git est bien installé
-git --version
-
 
 # ===== BASE DE DONNÉES POSTGRESQL =====
 
-# Crée une nouvelle base de données PostgreSQL nommée mon_projet_crud
-createdb mon_projet_crud
+# Crée une nouvelle base de données PostgreSQL createdb mon_projet_crud
 
-# Même commande avec le chemin complet (utilisée avant l'ajout au PATH)
+# Même commande avec le chemin complet (
 & "C:\Program Files\PostgreSQL\17\bin\createdb.exe" -U postgres mon_projet_crud
 
 # Liste toutes les bases de données existantes pour vérifier la création
@@ -28,6 +19,8 @@ npx create-next-app@latest mon-projet-crud
 cd crud
 npm run dev
 
+# Installation de lucide react
+npm i lucide-react
 
 # ===== MISE À JOUR DE NODE.JS ET NPM =====
 
@@ -36,6 +29,7 @@ npm install -g npm@12.0.2
 
 # Nouvelle tentative après mise à jour manuelle de Node.js
 npm install -g npm@latest
+
 
 
 # ===== INSTALLATION ET CONFIGURATION DE PRISMA =====
@@ -49,10 +43,6 @@ npm install @prisma/client
 # Première init (a créé une config "agent skills" à cause d'une version RC)
 npx prisma init
 
-# Nettoyage des résidus de cette fonctionnalité expérimentale
-rm -r .agents, .claude, .cursor, .devin
-rm prisma.config.ts
-
 # Réinitialisation propre, en précisant PostgreSQL explicitement
 npx prisma init --datasource-provider postgresql
 
@@ -61,6 +51,11 @@ npx prisma db pull
 
 # Crée la table dans PostgreSQL à partir du schema.prisma
 npx prisma migrate dev --name init
+
+# Migration Prisma
+npx prisma migrate dev --name categories              ajout d'une colonne catégorie
+npx prisma generate                 régénérer prisma
+
 
 # Régénère manuellement le client Prisma (depuis la racine du projet)
 npx prisma generate
@@ -73,8 +68,7 @@ npx prisma migrate dev --name rename_DateCreation_to_dateCreation
 # Faire une migration dans la base de donées
 npx prisma migrate dev --name rename_fields
 
-# Supprimer le cache
-rm -r .next
+
 
 # ===== GESTION DES VULNÉRABILITÉS NPM =====
 
@@ -98,19 +92,16 @@ npm install prisma@7.10.0 --save-dev
 # Installe le package de chargement des variables .env (requis par Prisma 7)
 npm install dotenv
 
-
 # ===== DRIVER ADAPTER POSTGRESQL =====
 
 # Installe l'adaptateur PostgreSQL requis par la nouvelle architecture Prisma 7
 npm install @prisma/adapter-pg pg
 npm install --save-dev @types/pg
 
-
 # ===== STRUCTURE DU PROJET =====
 
 # Crée le dossier lib/, absent par défaut, pour y placer prisma.ts
 mkdir lib
-
 
 # ===== NETTOYAGE FINAL DES RÉSIDUS =====
 
@@ -118,37 +109,38 @@ mkdir lib
 rm -r .agents, .claude, .windsurf
 rm AGENTS.md, CLAUDE.md
 rm skills-lock.json
-
-
-# ===== ANNULATION D'UNE TENTATIVE D'AUTOMATISATION =====
-
-# Retrait des packages installés pour ouvrir le navigateur automatiquement
-npm uninstall concurrently
-npm uninstall open-cli
-
+# Supprimer le cache
+rm -r .next
 
 # ===== GIT / GITHUB =====
 
 # Vérifier si .env est dans GitIgnor
 cat .gitignore
+
 # Vérifier l'état de git
 git status
+
 # Séquence classique pour publier un projet local sur un dépôt GitHub distant
 git add .
 git commit -m "Initial commit"
 git remote add origin https://github.com/ton-pseudo/nom-du-repo.git
 git branch -M main
 git push -u origin main
+
+# Norme de commit 
+feat(taches): ajoute la modification d'une tâche
+fix: corrige le nom de colonne dateCreation
+style(ui): applique un nouveau design sombre
+chore: nettoie les fichiers résiduels
+docs: met à jour le README
+refactor(taches): extrait la logique de filtre dans une fonction séparée
+style: applique un fond sombre
+test(actions): ajoute un test pour createTache
+perf(taches): limite le nombre de tâches chargées à 50 par page
 # Merge sur master
-git checkout master → se placer sur la branche qui doit recevoir le contenu
-git merge dev → copie tout l'historique et le contenu de dev dans master
-git push → envoie ça sur GitHub
-#
-page.tsx était un  composant serveur et n'aurais pas supporter un useState donc j'ai créer TacheItems.tsx
-# Installation de lucide react
-npm i lucide-react
-# Migration Prisma
-npx prisma migrate dev --name categories              ajout d'une colonne catégorie
-npx prisma generate                 régénérer prisma
-npx tsx prisma/seed.ts    lancer le script
-npx prisma migrate dev --name ajoute_categories
+git checkout master 
+git merge dev →  le contenu de dev dans master
+git push 
+
+
+

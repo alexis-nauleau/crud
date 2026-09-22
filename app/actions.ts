@@ -1,10 +1,8 @@
 // Directive Next.js 
 'use server'
 
-
 import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
-
 
 // ----- CRÉER UNE TÂCHE -----
 
@@ -13,6 +11,9 @@ export async function createTache(formData: FormData) {
   // Récupère la valeur tapée dans <input name="titre" /> du formulaire
   const titre = formData.get('titre') as string
   const categorieId = formData.get('categorieId') as string
+   // Récupère la date choisie dans le champ <input type="date">.
+  // Le navigateur envoie une chaîne au format "AAAA-MM-JJ" (ex: "2026-09-30"),
+  const dateEcheanceStr = formData.get('dateEcheance') as string
 
     // Demande à Prisma de créer une nouvelle ligne dans la table Taches
   await prisma.taches.create({
@@ -20,6 +21,7 @@ export async function createTache(formData: FormData) {
       titre,
       // Opérateur ternaire : condition ? valeur_si_vrai : valeur_si_faux
       categorieId: categorieId ? categorieId : null,
+      dateEcheance: dateEcheanceStr ? new Date(dateEcheanceStr) : null,
     },
   })
 

@@ -19,6 +19,7 @@ model Taches {
   titre        String
   fait         Boolean    @default(false)
   dateCreation DateTime   @default(now())
+  dateEcheance DateTime?  // "?" = optionnel, une tâche peut ne pas avoir de date limite
   categorieId  String?    // "?" = optionnel, une tâche peut n'avoir aucune catégorie
   categorie    Categorie? @relation(fields: [categorieId], references: [id])
 }

@@ -7,6 +7,7 @@ type Tache = {
   id: string
   titre: string
   fait: boolean
+  dateEcheance: Date | null
   categorie: { nom: string; couleur: string } | null
 }
 

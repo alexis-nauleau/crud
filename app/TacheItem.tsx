@@ -10,6 +10,7 @@ type Tache = {
   id: string
   titre: string
   fait: boolean
+  dateEcheance: Date | null
   categorie: { nom: string; couleur: string } | null
 }
 
@@ -29,6 +30,18 @@ export default function TacheItem({ tache }: { tache: Tache }) {
     await updateTache(tache.id, titre) // envoie le nouveau titre à la base via Prisma
     setEnEdition(false) // referme le mode édition une fois la sauvegarde faite
   }
+  // Calcule si la tâche est "en retard" : elle a une date d'échéance,
+  // cette date est déjà passée par rapport à maintenant, ET elle n'est pas encore faite
+  // (une tâche faite en retard n'a plus besoin d'alerter visuellement)
+  const enRetard =
+    tache.dateEcheance && !tache.fait && new Date(tache.dateEcheance) < new Date()
+  // Formate la date en "30 sept." plutôt que le format brut "2026-09-30T00:00:00.000Z"
+  const dateFormatee = tache.dateEcheance
+    ? new Date(tache.dateEcheance).toLocaleDateString('fr-FR', {
+      day: 'numeric',
+      month: 'short',
+    })
+    : null
 
   return (
     // "group" permet à ce conteneur de servir de référence pour "group-hover" plus bas
@@ -56,7 +69,7 @@ export default function TacheItem({ tache }: { tache: Tache }) {
       {enEdition ? (
         <input
           type="text"
-          value={titre} 
+          value={titre}
           onChange={(e) => setTitre(e.target.value)} // met à jour le state à chaque frappe
           className="flex-1 bg-transparent text-sm text-zinc-50 border-b border-zinc-600 focus:outline-none"
         />
@@ -71,11 +84,23 @@ export default function TacheItem({ tache }: { tache: Tache }) {
           {tache.titre}
         </span>
       )}
-      {/* Nouveau : rond coloré de la catégorie */}
+    
+      {/*  affiché seulement si une date d'échéance existe couleur rouge si en retard, gris neutre sinon */}      
+      {dateFormatee && (
+        <span
+          className={
+            enRetard ? 'text-xs px-2 py-0.5 rounded-full bg-rose-950 text-rose-400' : 'text-xs px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-400'
+          
+          }
+
+        >
+          {dateFormatee}
+        </span>
+      )}
       {tache.categorie && (
         <span
           // "style" avec une couleur dynamique : impossible avec une classe Tailwind
-          
+
           style={{ backgroundColor: tache.categorie.couleur }}
           className="w-5 h-5 rounded-full shrink-0"
           title={tache.categorie.nom} // affiche le nom au survol de la souris

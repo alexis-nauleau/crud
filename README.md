@@ -151,4 +151,6 @@ npm i lucide-react
 npx prisma migrate dev --name categories              ajout d'une colonne catégorie
 npx prisma generate                 régénérer prisma
 npx tsx prisma/seed.ts    lancer le script
-npx prisma migrate dev --name ajoute_categories
+# Echéancier
+npx prisma migrate dev --name ajoute_date_echeance
+npx prisma generate

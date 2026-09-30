@@ -2,13 +2,13 @@ import { prisma } from '@/lib/prisma'
 import { createTache } from './actions'
 import TacheList from './TacheList'
 
-// "async" car on va chercher des données en base AVANT d'afficher quoi que ce soit.
+
 export default async function Home() {
 
   // Récupère TOUTES les tâches de la base, triées par date de création, la plus récente en premier 
   // récupère aussi les infos de la catégorie liée
   const taches = await prisma.taches.findMany({
-    orderBy: { dateCreation: 'desc' },
+    orderBy: { ordre: 'desc' },
     include: { categorie: true },
   })
 
@@ -29,11 +29,10 @@ export default async function Home() {
           {taches.length} tâche{taches.length > 1 ? 's' : ''}, {nbFaites} terminée{nbFaites > 1 ? 's' : ''}
         </p>
 
-        {/* "flex-col" empile les lignes verticalement : le titre seul en haut,
-            puis catégorie + date + bouton sur une deuxième ligne */}
+       
         <form action={createTache} className="flex flex-col gap-3 mb-6">
 
-          {/* Ligne 1 : le champ titre, seul, pleine largeur */}
+         
           <div>
             <label className="text-xs text-zinc-500 mb-1 block">Titre</label>
             <input
@@ -65,7 +64,6 @@ export default async function Home() {
               </select>
             </div>
 
-            {/* Champ de sélection de date, avec son label au-dessus */}
             <div className="flex-1">
               <label className="text-xs text-zinc-500 mb-1 block">Échéance</label>
               <input

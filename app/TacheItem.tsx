@@ -1,10 +1,10 @@
 'use client'
 
-
 import { useState } from 'react'
-import { Pencil, Trash2, Check } from 'lucide-react'
+import { Pencil, Trash2, Check, GripVertical } from 'lucide-react'
+import { useSortable } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { toggleTache, deleteTache, updateTache } from './actions'
-
 
 type Tache = {
   id: string
@@ -14,28 +14,35 @@ type Tache = {
   categorie: { nom: string; couleur: string } | null
 }
 
-
-export default function TacheItem({ tache }: { tache: Tache }) {
-
-  // "enEdition" = est-ce qu'on affiche le champ modifiable ou le texte normal ?
-  // useState renvoie toujours une paire : [valeur actuelle, fonction pour la changer]
+// "dragActif" vient du parent : dit si la poignée de glisser doit être utilisable
+export default function TacheItem({ tache, dragActif }: { tache: Tache; dragActif: boolean }) {
   const [enEdition, setEnEdition] = useState(false)
-
-  // "titre" = une copie locale et modifiable du texte, initialisée avec le titre actuel.
-  // On ne modifie jamais directement "tache.titre" (qui vient de la base) pendant la saisie
   const [titre, setTitre] = useState(tache.titre)
 
-  // Fonction appelée quand l'utilisateur clique sur "Valider" après avoir modifié le texte
-  async function handleUpdate() {
-    await updateTache(tache.id, titre) // envoie le nouveau titre à la base via Prisma
-    setEnEdition(false) // referme le mode édition une fois la sauvegarde faite
+  // useSortable connecte ce composant au système de drag & drop de dnd-kit.
+  // Il renvoie tout ce qu'il faut pour rendre CET élément déplaçable
+  const {
+    attributes,   // props d'accessibilité à mettre sur la poignée
+    listeners,    // gestionnaires d'événements (mousedown, touchstart...) pour la poignée
+    setNodeRef,   // référence à attacher à l'élément déplaçable
+    transform,    // décalage visuel pendant le glisser
+    transition,   // animation fluide au relâchement
+  } = useSortable({ id: tache.id, disabled: !dragActif })
+
+  // Applique le décalage et la transition calculés par dnd-kit en style CSS
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
   }
-  // Calcule si la tâche est "en retard" : elle a une date d'échéance,
-  // cette date est déjà passée par rapport à maintenant, ET elle n'est pas encore faite
-  // (une tâche faite en retard n'a plus besoin d'alerter visuellement)
+
+  async function handleUpdate() {
+    await updateTache(tache.id, titre)
+    setEnEdition(false)
+  }
+
   const enRetard =
     tache.dateEcheance && !tache.fait && new Date(tache.dateEcheance) < new Date()
-  // Formate la date en "30 sept." plutôt que le format brut "2026-09-30T00:00:00.000Z"
+
   const dateFormatee = tache.dateEcheance
     ? new Date(tache.dateEcheance).toLocaleDateString('fr-FR', {
       day: 'numeric',
@@ -44,33 +51,48 @@ export default function TacheItem({ tache }: { tache: Tache }) {
     : null
 
   return (
-    // "group" permet à ce conteneur de servir de référence pour "group-hover" plus bas
-    // (les icônes n'apparaissent que quand on survole CETTE ligne précise)
-    // "shadow-lg shadow-black/40" ajoute une ombre portée visible même sur fond sombre
-    <div className="group flex items-center gap-3 px-2.5 py-3 rounded-xl hover:bg-zinc-800 transition-colors shadow-lg shadow-black/40">
+    // "ref={setNodeRef}" et "style" sont nécessaires sur le conteneur pour
+    // que dnd-kit puisse le déplacer visuellement pendant le glisser
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="group flex items-center gap-3 px-2.5 py-3 rounded-xl hover:bg-zinc-800 transition-colors shadow-lg shadow-black/40"
+    >
 
-      {/* Bouton rond pour marquer fait pas fait.*/}
+      {/* Poignée de glisser : seule cette icône déclenche le drag,
+          pas toute la ligne (évite de gêner les clics sur les autres boutons).
+          "attributes" et "listeners" ne sont utiles que si dragActif est vrai */}
+      <div
+        {...(dragActif ? { ...attributes, ...listeners } : {})}
+        className={
+          dragActif
+            ? 'cursor-grab active:cursor-grabbing text-zinc-600 hover:text-zinc-400'
+            : 'text-zinc-800 cursor-not-allowed'
+        }
+        role="button"
+        aria-label="Réordonner"
+      >
+        <GripVertical size={16} />
+      </div>
+
       <form action={toggleTache.bind(null, tache.id, tache.fait)}>
         <button
           type="submit"
           className={
             tache.fait
               ? 'w-5 h-5 rounded-full bg-teal-500 flex items-center justify-center'
-              : 'w-5 h-5 rounded-full border-[1.5px] border-zinc-600 '
+              : 'w-5 h-5 rounded-full border-[1.5px] border-zinc-600'
           }
         >
-          {/* La coche ne s'affiche que si la tâche est faite */}
           {tache.fait && <Check size={13} className="text-teal-950" />}
         </button>
       </form>
 
-      {/* Affichage conditionnel : soit le champ de saisie (mode édition),
-          soit le texte simple (mode normal) */}
       {enEdition ? (
         <input
           type="text"
           value={titre}
-          onChange={(e) => setTitre(e.target.value)} // met à jour le state à chaque frappe
+          onChange={(e) => setTitre(e.target.value)}
           className="flex-1 bg-transparent text-sm text-zinc-50 border-b border-zinc-600 focus:outline-none"
         />
       ) : (
@@ -84,48 +106,44 @@ export default function TacheItem({ tache }: { tache: Tache }) {
           {tache.titre}
         </span>
       )}
-    
-      {/*  affiché seulement si une date d'échéance existe couleur rouge si en retard, gris neutre sinon */}      
+
       {dateFormatee && (
         <span
           className={
-            enRetard ? 'text-xs px-2 py-0.5 rounded-full bg-rose-950 text-rose-400' : 'text-xs px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-400'
-          
+            enRetard
+              ? 'text-xs px-2 py-0.5 rounded-full bg-rose-950 text-rose-400'
+              : 'text-xs px-2 py-0.5 rounded-full bg-zinc-800 text-zinc-400'
           }
-
         >
           {dateFormatee}
         </span>
       )}
+
       {tache.categorie && (
         <span
-          // "style" avec une couleur dynamique : impossible avec une classe Tailwind
-
           style={{ backgroundColor: tache.categorie.couleur }}
           className="w-5 h-5 rounded-full shrink-0"
-          title={tache.categorie.nom} // affiche le nom au survol de la souris
+          title={tache.categorie.nom}
         />
       )}
 
-      {/* Bouton Modifier/Valider, selon le mode actuel */}
       {enEdition ? (
         <button
-          onClick={handleUpdate} // appel direct de la fonction, pas de <form> ici
+          onClick={handleUpdate}
           className="text-xs text-teal-400 hover:text-teal-300"
         >
           Valider
         </button>
       ) : (
         <button
-          onClick={() => setEnEdition(true)} // passe simplement enEdition à true
-          aria-label="Modifier" // texte lu par les lecteurs d'écran (accessibilité)
+          onClick={() => setEnEdition(true)}
+          aria-label="Modifier"
           className="opacity-0 group-hover:opacity-100 transition-opacity"
         >
           <Pencil size={16} className="text-teal-400 hover:text-teal-300" />
         </button>
       )}
 
-      {/* Bouton supprimer, toujours via un <form> + .bind() comme pour toggleTache */}
       <form action={deleteTache.bind(null, tache.id)}>
         <button
           type="submit"

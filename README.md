@@ -139,8 +139,10 @@ test(actions): ajoute un test pour createTache
 perf(taches): limite le nombre de tâches chargées à 50 par page
 # Merge sur master
 git checkout master 
+git pull
 git merge dev →  le contenu de dev dans master
-git push 
+git push
+
 
 # ===== INSTALLATION ET CONFIGURATION DE dnd (drag and drop) =====
 

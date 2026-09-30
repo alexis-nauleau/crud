@@ -40,8 +40,16 @@ export default function TacheList({ taches }: { taches: Tache[] }) {
   // Copie locale des tâches, pour pouvoir réordonner visuellement immédiatement au drag
   const [tachesLocales, setTachesLocales] = useState(taches)
 
-  // Nouveau : texte tapé dans le champ de recherche
+  // Texte tapé dans le champ de recherche
   const [recherche, setRecherche] = useState('')
+
+  // Compte combien de tâches sont "en retard" : une date d'échéance déjà dépassée
+  // et pas encore marquées comme faites. Calculé sur TOUTES les tâches
+  // (tachesLocales), pas seulement celles affichées, pour que le nombre reste
+  // exact peu importe le filtre ou la recherche en cours
+  const nbEnRetard = tachesLocales.filter(
+    (t) => t.dateEcheance && !t.fait && new Date(t.dateEcheance) < new Date()
+  ).length
 
   const sensors = useSensors(useSensor(PointerSensor))
 
@@ -51,7 +59,7 @@ export default function TacheList({ taches }: { taches: Tache[] }) {
     setPage(1)
   }
 
-  // Nouveau : idem pour la recherche, remet la page à 1 à chaque frappe,
+  // Idem pour la recherche, remet la page à 1 à chaque frappe,
   // sinon on pourrait se retrouver sur une page qui n'a plus de résultat
   function changerRecherche(texte: string) {
     setRecherche(texte)
@@ -94,7 +102,7 @@ export default function TacheList({ taches }: { taches: Tache[] }) {
 
   return (
     <div>
-      {/* Nouveau : champ de recherche par titre */}
+      {/* Champ de recherche par titre */}
       <input
         type="text"
         value={recherche}
@@ -102,6 +110,13 @@ export default function TacheList({ taches }: { taches: Tache[] }) {
         placeholder="Rechercher une tâche..."
         className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-50 placeholder-zinc-500 focus:outline-none focus:border-teal-600 mb-4"
       />
+
+      {/* Nouveau : affiche le nombre de tâches en retard, seulement s'il y en a */}
+      {nbEnRetard > 0 && (
+        <p className="text-xs text-rose-400 mb-3">
+          {nbEnRetard} tâche{nbEnRetard > 1 ? 's' : ''} en retard
+        </p>
+      )}
 
       {/* Boutons de filtre */}
       <div className="flex gap-1 mb-4">

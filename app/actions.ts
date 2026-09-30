@@ -48,7 +48,7 @@ export async function toggleTache(id: string, fait: boolean) {
 export async function deleteTache(id: string) {
 
   // Supprime définitivement la ligne correspondant à cet id
-  await prisma.taches.delete({
+  await prisma.taches.deleteMany({ // "deleteMany" plutôt que "delete" : ne plante pas si aucune ligne ne correspond
     where: { id },
   })
 
@@ -61,5 +61,26 @@ export async function updateTache(id: string, titre: string) {
     where: { id },
     data: { titre },
   })
+  revalidatePath('/')
+}
+
+// ----- RÉORDONNER LES TÂCHES -----
+
+// Reçoit un tableau ordonné d'ids : l'ordre dans ce tableau EST le nouvel ordre voulu
+export async function reordonnerTaches(idsOrdonnes: string[]) {
+
+  // On prépare une mise à jour pour chaque tâche, où "ordre" devient
+  // simplement sa position dans le tableau reçu (0, 1, 2, 3...)
+  const updates = idsOrdonnes.map((id, index) =>
+    prisma.taches.update({
+      where: { id },
+      data: { ordre: index },
+    })
+  )
+
+  // $transaction exécute toutes ces mises à jour comme une seule opération
+  // (évite un état incohérent si une mise à jour échouait en cours de route)
+  await prisma.$transaction(updates)
+
   revalidatePath('/')
 }

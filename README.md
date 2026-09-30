@@ -142,5 +142,7 @@ git checkout master
 git merge dev →  le contenu de dev dans master
 git push 
 
+# ===== INSTALLATION ET CONFIGURATION DE dnd (drag and drop) =====
 
+npm install @dnd-kit/core @dnd-kit/sortable @dnd-kit/utilities
 

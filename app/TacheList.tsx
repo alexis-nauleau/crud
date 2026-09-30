@@ -7,15 +7,13 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
-  type DragEndEvent, // n'est pas une fonction — c'est juste une forme d'objet que TypeScript utilise pour vérifier que tu manipules correctement les données.
+  type DragEndEvent,
 } from '@dnd-kit/core'
-
 import {
   SortableContext,
   verticalListSortingStrategy,
   arrayMove,
 } from '@dnd-kit/sortable'
-
 import TacheItem from './TacheItem'
 import { reordonnerTaches } from './actions'
 
@@ -39,12 +37,20 @@ export default function TacheList({ taches }: { taches: Tache[] }) {
   // "page" = le numéro de la page actuellement affichée, commence à 1
   const [page, setPage] = useState(1)
 
-  // Copie locale des tâches, pour pouvoir réordonner visuellement
-  // IMMÉDIATEMENT au drag, sans attendre la réponse du serveur
+  // Copie locale des tâches, pour pouvoir réordonner visuellement immédiatement au drag
   const [tachesLocales, setTachesLocales] = useState(taches)
 
-  // "sensors" configure comment dnd-kit détecte le début d'un glisser-déposer.
-  // PointerSensor fonctionne à la fois avec la souris et le tactile
+  // Texte tapé dans le champ de recherche
+  const [recherche, setRecherche] = useState('')
+
+  // Compte combien de tâches sont "en retard" : une date d'échéance déjà dépassée
+  // et pas encore marquées comme faites. Calculé sur TOUTES les tâches
+  // (tachesLocales), pas seulement celles affichées, pour que le nombre reste
+  // exact peu importe le filtre ou la recherche en cours
+  const nbEnRetard = tachesLocales.filter(
+    (t) => t.dateEcheance && !t.fait && new Date(t.dateEcheance) < new Date()
+  ).length
+
   const sensors = useSensors(useSensor(PointerSensor))
 
   // Change de filtre ET remet la pagination à la page 1.
@@ -53,50 +59,66 @@ export default function TacheList({ taches }: { taches: Tache[] }) {
     setPage(1)
   }
 
-  // On calcule la liste filtrée à chaque rendu, selon le filtre actif
+  // Idem pour la recherche, remet la page à 1 à chaque frappe,
+  // sinon on pourrait se retrouver sur une page qui n'a plus de résultat
+  function changerRecherche(texte: string) {
+    setRecherche(texte)
+    setPage(1)
+  }
+
+  // On applique d'abord le filtre (toutes/à faire/faites)...
   const tachesFiltrees = tachesLocales.filter((tache) => {
     if (filtre === 'a-faire') return !tache.fait
     if (filtre === 'faites') return tache.fait
-    return true // 'toutes' : aucun filtrage
+    return true
   })
 
-  // Calcule le nombre total de pages nécessaires.
-  const totalPages = Math.ceil(tachesFiltrees.length / TACHES_PAR_PAGE)
+  // ...puis la recherche texte par-dessus. toLowerCase() des deux côtés
+  // pour que la recherche ignore la casse ("Courses" trouve "courses")
+  const tachesRecherchees = tachesFiltrees.filter((tache) =>
+    tache.titre.toLowerCase().includes(recherche.toLowerCase())
+  )
 
-  // Le drag & drop n'est activé que sur la vue complète, sans filtre ni pagination,
-  // pour éviter toute ambiguïté sur la position réelle d'une tâche masquée
-  const dragActif = filtre === 'toutes' && totalPages <= 1
+  const totalPages = Math.ceil(tachesRecherchees.length / TACHES_PAR_PAGE)
+
+  // Le drag & drop reste limité à la vue complète, sans filtre, recherche ni pagination
+  const dragActif = filtre === 'toutes' && recherche === '' && totalPages <= 1
 
   const indexDebut = (page - 1) * TACHES_PAR_PAGE
   const indexFin = indexDebut + TACHES_PAR_PAGE
-  const tachesAffichees = tachesFiltrees.slice(indexDebut, indexFin)
+  const tachesAffichees = tachesRecherchees.slice(indexDebut, indexFin)
 
-  // Appelée quand l'utilisateur relâche une tâche après l'avoir glissée
   async function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event
-
-    // "over" est null si on relâche en dehors de la zone de la liste : on ignore
     if (!over || active.id === over.id) return
 
-    // Retrouve la position de départ et d'arrivée dans le tableau local
     const ancienIndex = tachesLocales.findIndex((t) => t.id === active.id)
     const nouvelIndex = tachesLocales.findIndex((t) => t.id === over.id)
-
-    // arrayMove déplace un élément d'une position à une autre dans un tableau,
-    // en renvoyant un NOUVEAU tableau (sans modifier l'original)
     const nouvelOrdre = arrayMove(tachesLocales, ancienIndex, nouvelIndex)
 
-    // Met à jour l'affichage immédiatement, avant même la réponse du serveur
-    // (rend l'interface réactive, l'utilisateur voit le résultat tout de suite)
     setTachesLocales(nouvelOrdre)
-
-    // Envoie le nouvel ordre en base, en arrière-plan
     await reordonnerTaches(nouvelOrdre.map((t) => t.id))
   }
 
   return (
     <div>
-  
+      {/* Champ de recherche par titre */}
+      <input
+        type="text"
+        value={recherche}
+        onChange={(e) => changerRecherche(e.target.value)}
+        placeholder="Rechercher une tâche..."
+        className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-50 placeholder-zinc-500 focus:outline-none focus:border-teal-600 mb-4"
+      />
+
+      {/* Nouveau : affiche le nombre de tâches en retard, seulement s'il y en a */}
+      {nbEnRetard > 0 && (
+        <p className="text-xs text-rose-400 mb-3">
+          {nbEnRetard} tâche{nbEnRetard > 1 ? 's' : ''} en retard
+        </p>
+      )}
+
+      {/* Boutons de filtre */}
       <div className="flex gap-1 mb-4">
         <button
           onClick={() => changerFiltre('toutes')}
@@ -130,30 +152,22 @@ export default function TacheList({ taches }: { taches: Tache[] }) {
         </button>
       </div>
 
-      {/* Petit message explicatif quand le drag est désactivé */}
       {!dragActif && (
         <p className="text-xs text-zinc-600 mb-2">
-          Le réordonnement est disponible uniquement sur "Toutes" sans pagination.
+          Le réordonnement est disponible uniquement sur "Toutes" sans recherche ni pagination.
         </p>
       )}
 
-      {/* Liste filtrée et paginée, ou message si vide */}
       {tachesAffichees.length === 0 ? (
         <p className="text-sm text-zinc-500 text-center py-6">
-          Aucune tâche dans cette catégorie.
+          Aucune tâche ne correspond.
         </p>
       ) : (
-        // DndContext englobe toute la zone où le glisser-déposer est possible.
-        // "sensors" et "collisionDetection" configurent son comportement,
-        // "onDragEnd" est appelé au relâchement
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
           onDragEnd={handleDragEnd}
         >
-          {/* SortableContext dit à dnd-kit quels éléments (par leur id) peuvent
-              être réordonnés entre eux, et selon quelle stratégie visuelle
-              (ici : une liste verticale classique) */}
           <SortableContext
             items={tachesAffichees.map((t) => t.id)}
             strategy={verticalListSortingStrategy}
@@ -167,7 +181,6 @@ export default function TacheList({ taches }: { taches: Tache[] }) {
         </DndContext>
       )}
 
-      {/* Contrôles de pagination : affichés seulement s'il y a plus d'une page */}
       {totalPages > 1 && (
         <div className="flex items-center justify-between mt-4 pt-3 border-t border-zinc-800">
           <button
